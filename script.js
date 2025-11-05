@@ -50,6 +50,12 @@ function init() {
 
   let gifts = [];
 
+  function sanitizeHTML(str) {
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
+  }
+
   function normalizePrice(value) {
     if (typeof value === "number") {
       return Number.isFinite(value) ? value : null;
@@ -73,7 +79,9 @@ function init() {
   }
 
   function renderLists() {
-    wishlistContainer.innerHTML = "";
+    while (wishlistContainer.firstChild) {
+      wishlistContainer.removeChild(wishlistContainer.firstChild);
+    }
     const grouped = {};
     for (const gift of gifts) {
       const recipient = gift.recipient || "Uncategorized";
@@ -158,7 +166,9 @@ function init() {
   }
 
   function updateList(listElement, items) {
-    listElement.innerHTML = "";
+    while (listElement.firstChild) {
+      listElement.removeChild(listElement.firstChild);
+    }
     if (!items.length) {
       const empty = document.createElement("li");
       empty.className = "gift-item gift-item--empty";
@@ -191,12 +201,18 @@ function init() {
       meta.className = "gift-item__meta";
 
       const category = document.createElement("span");
-      category.innerHTML = `<span aria-hidden="true">🏷️</span>${gift.category}`;
+      const categoryIcon = document.createElement("span");
+      categoryIcon.setAttribute("aria-hidden", "true");
+      categoryIcon.textContent = "🏷️";
+      category.append(categoryIcon, sanitizeHTML(gift.category));
       meta.append(category);
 
       if (gift.event) {
         const event = document.createElement("span");
-        event.innerHTML = `<span aria-hidden="true">🎉</span>${gift.event}`;
+        const eventIcon = document.createElement("span");
+        eventIcon.setAttribute("aria-hidden", "true");
+        eventIcon.textContent = "🎉";
+        event.append(eventIcon, sanitizeHTML(gift.event));
         meta.append(event);
       }
 
@@ -205,16 +221,22 @@ function init() {
         meta.append(progressBar, progressText);
       } else if (typeof gift.price === "number" && !Number.isNaN(gift.price)) {
         const price = document.createElement("span");
-        price.innerHTML = `<span aria-hidden="true">💰</span>${formatCurrency(gift.price)}`;
+        const priceIcon = document.createElement("span");
+        priceIcon.setAttribute("aria-hidden", "true");
+        priceIcon.textContent = "💰";
+        price.append(priceIcon, formatCurrency(gift.price));
         meta.append(price);
       }
 
       const added = document.createElement("span");
+      const addedIcon = document.createElement("span");
+      addedIcon.setAttribute("aria-hidden", "true");
+      addedIcon.textContent = "🗓️";
       const addedDate = new Date(gift.added);
       const friendlyDate = !Number.isNaN(addedDate.getTime())
         ? addedDate.toLocaleDateString(undefined, { month: "short", day: "numeric" })
         : "Recently added";
-      added.innerHTML = `<span aria-hidden="true">🗓️</span>${friendlyDate}`;
+      added.append(addedIcon, friendlyDate);
       meta.append(added);
 
       const actions = document.createElement("div");
@@ -340,26 +362,48 @@ function init() {
         renderInspiration(inspirationItems);
       } catch (error) {
         console.error("Error loading inspiration items:", error);
-        grid.innerHTML = "<p>Could not load inspiration items.</p>";
+        while (grid.firstChild) {
+        grid.removeChild(grid.firstChild);
+      }
+        const error = document.createElement("p");
+        error.textContent = "Could not load inspiration items.";
+        grid.append(error);
       }
     }
 
     function renderInspiration(items) {
-      grid.innerHTML = "";
+      while (grid.firstChild) {
+        grid.removeChild(grid.firstChild);
+      }
       items.forEach(item => {
         const card = document.createElement("article");
         card.className = "gift-card";
         card.dataset.groups = item.groups.join(" ");
 
-        card.innerHTML = `
-          <div class="gift-card__tag">${item.tag}</div>
-          <h3>${item.name}</h3>
-          <p>${item.description}</p>
-          <div class="gift-card__meta">
-            <span>${formatCurrency(item.price)}</span>
-            <a href="${item.link}" target="_blank" rel="noopener">View inspiration</a>
-          </div>
-        `;
+        const tag = document.createElement('div');
+        tag.className = 'gift-card__tag';
+        tag.textContent = item.tag;
+
+        const name = document.createElement('h3');
+        name.textContent = item.name;
+
+        const description = document.createElement('p');
+        description.textContent = item.description;
+
+        const meta = document.createElement('div');
+        meta.className = 'gift-card__meta';
+
+        const price = document.createElement('span');
+        price.textContent = formatCurrency(item.price);
+
+        const link = document.createElement('a');
+        link.href = item.link;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'View inspiration';
+
+        meta.append(price, link);
+        card.append(tag, name, description, meta);
         grid.append(card);
       });
       cards = Array.from(grid.querySelectorAll(".gift-card"));
