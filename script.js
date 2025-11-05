@@ -13,8 +13,11 @@ import {
   signOut
 } from './firebase-init.js';
 
+let giftsCollection;
+
 onAuthStateChanged(auth, user => {
   if (user) {
+    giftsCollection = collection(db, "users", user.uid, "gifts");
     init();
   } else {
     window.location.href = "login.html";
@@ -22,7 +25,6 @@ onAuthStateChanged(auth, user => {
 });
 
 function init() {
-  const giftsCollection = collection(db, "gifts");
 
   const wishlistContainer = document.getElementById("wishlist-container");
 
@@ -227,7 +229,7 @@ function init() {
         toggleBtn.classList.add("is-complete");
       }
       toggleBtn.addEventListener("click", () => {
-        const giftRef = doc(db, "gifts", gift.id);
+        const giftRef = doc(giftsCollection, gift.id);
         updateDoc(giftRef, { purchased: !gift.purchased });
       });
       
@@ -237,7 +239,7 @@ function init() {
       deleteBtn.textContent = "Delete";
       deleteBtn.addEventListener("click", () => {
         if (confirm("Are you sure you want to delete this gift?")) {
-          const giftRef = doc(db, "gifts", gift.id);
+          const giftRef = doc(giftsCollection, gift.id);
           deleteDoc(giftRef);
         }
       });
