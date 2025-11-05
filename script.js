@@ -18,6 +18,7 @@ let giftsCollection;
 onAuthStateChanged(auth, user => {
   if (user) {
     giftsCollection = collection(db, "users", user.uid, "gifts");
+    console.log("giftsCollection path:", giftsCollection.path);
     init();
   } else {
     window.location.href = "login.html";
@@ -290,6 +291,8 @@ function init() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    console.log("handleSubmit called");
+    console.log("giftsCollection path:", giftsCollection.path);
     const formData = new FormData(form);
     const name = formData.get("name").trim();
     if (!name) {
