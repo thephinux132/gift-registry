@@ -1,0 +1,51 @@
+
+[
+  {
+    "tag": "Weekend Escape",
+    "name": "Mountaintop Cabin Weekend",
+    "description": "Two nights at a quiet cabin with a private hot tub, chef-prepared meals, and a photo session to capture the memories.",
+    "price": 540,
+    "link": "https://www.getaway.house",
+    "groups": ["wife", "experience"]
+  },
+  {
+    "tag": "Keepsake",
+    "name": "Custom Family Story Necklace",
+    "description": "Hand-stamped necklace featuring milestone charms chosen by the kids. Comes with a note from each child tucked in the box.",
+    "price": 120,
+    "link": "https://www.etsy.com",
+    "groups": ["wife", "keepsake"]
+  },
+  {
+    "tag": "Mindful Moment",
+    "name": "At-Home Spa & Story Night",
+    "description": "A basket of spa treats, a handwritten playlist, and the kids reading their favorite bedtime story while candles glow.",
+    "price": 85,
+    "link": "https://www.uncommongoods.com",
+    "groups": ["wife", "experience"]
+  },
+  {
+    "tag": "STEM Fun",
+    "name": "Rocket Lab Afternoon",
+    "description": "Build-your-own rocket launcher kit followed by a backyard launch party complete with mission badges and cocoa.",
+    "price": 65,
+    "link": "https://www.kiwico.com",
+    "groups": ["kids", "learning"]
+  },
+  {
+    "tag": "Memory Maker",
+    "name": "Adventure Scrapbook Starter",
+    "description": "A bundle of instant film, blank comic panels, and colorful washi tapes so the kids can document every adventure.",
+    "price": 48,
+    "link": "https://www.artscow.com",
+    "groups": ["kids", "keepsake"]
+  },
+  {
+    "tag": "Family Time",
+    "name": "Twilight Backyard Movie Night",
+    "description": "Projector rental, homemade popcorn bar, glow sticks, and a vote on the feature film so every kid feels like the director.",
+    "price": 110,
+    "link": "https://www.funflicks.com",
+    "groups": ["kids", "experience"]
+  }
+]

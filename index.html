@@ -93,65 +93,7 @@
         </header>
 
         <div class="card-grid" data-featured-grid>
-          <article class="gift-card" data-groups="wife experience">
-            <div class="gift-card__tag">Weekend Escape</div>
-            <h3>Mountaintop Cabin Weekend</h3>
-            <p>Two nights at a quiet cabin with a private hot tub, chef-prepared meals, and a photo session to capture the memories.</p>
-            <div class="gift-card__meta">
-              <span>$540</span>
-              <a href="https://www.getaway.house" target="_blank" rel="noopener">View inspiration</a>
-            </div>
-          </article>
-
-          <article class="gift-card" data-groups="wife keepsake">
-            <div class="gift-card__tag">Keepsake</div>
-            <h3>Custom Family Story Necklace</h3>
-            <p>Hand-stamped necklace featuring milestone charms chosen by the kids. Comes with a note from each child tucked in the box.</p>
-            <div class="gift-card__meta">
-              <span>$120</span>
-              <a href="https://www.etsy.com" target="_blank" rel="noopener">Shop styles</a>
-            </div>
-          </article>
-
-          <article class="gift-card" data-groups="wife experience">
-            <div class="gift-card__tag">Mindful Moment</div>
-            <h3>At-Home Spa &amp; Story Night</h3>
-            <p>A basket of spa treats, a handwritten playlist, and the kids reading their favorite bedtime story while candles glow.</p>
-            <div class="gift-card__meta">
-              <span>$85</span>
-              <a href="https://www.uncommongoods.com" target="_blank" rel="noopener">Build the set</a>
-            </div>
-          </article>
-
-          <article class="gift-card" data-groups="kids learning">
-            <div class="gift-card__tag">STEM Fun</div>
-            <h3>Rocket Lab Afternoon</h3>
-            <p>Build-your-own rocket launcher kit followed by a backyard launch party complete with mission badges and cocoa.</p>
-            <div class="gift-card__meta">
-              <span>$65</span>
-              <a href="https://www.kiwico.com" target="_blank" rel="noopener">Explore kits</a>
-            </div>
-          </article>
-
-          <article class="gift-card" data-groups="kids keepsake">
-            <div class="gift-card__tag">Memory Maker</div>
-            <h3>Adventure Scrapbook Starter</h3>
-            <p>A bundle of instant film, blank comic panels, and colorful washi tapes so the kids can document every adventure.</p>
-            <div class="gift-card__meta">
-              <span>$48</span>
-              <a href="https://www.artscow.com" target="_blank" rel="noopener">Grab supplies</a>
-            </div>
-          </article>
-
-          <article class="gift-card" data-groups="kids experience">
-            <div class="gift-card__tag">Family Time</div>
-            <h3>Twilight Backyard Movie Night</h3>
-            <p>Projector rental, homemade popcorn bar, glow sticks, and a vote on the feature film so every kid feels like the director.</p>
-            <div class="gift-card__meta">
-              <span>$110</span>
-              <a href="https://www.funflicks.com" target="_blank" rel="noopener">Plan it</a>
-            </div>
-          </article>
+          <!-- Featured items will be loaded here -->
         </div>
         <p class="section__note">Use the filters to focus on just my wife, the kids, or a type of gift experience.</p>
       </div>
@@ -187,21 +129,8 @@
         </div>
 
         <div class="wishlist-layout">
-          <div class="wishlist__columns">
-            <section class="wishlist__column" aria-labelledby="wife-list-title">
-              <div class="column__header">
-                <h3 id="wife-list-title">For My Wife</h3>
-                <span class="column__count" data-count-wife>0 items</span>
-              </div>
-              <ul class="gift-list" data-recipient-list="wife"></ul>
-            </section>
-            <section class="wishlist__column" aria-labelledby="kids-list-title">
-              <div class="column__header">
-                <h3 id="kids-list-title">For The Kids</h3>
-                <span class="column__count" data-count-kids>0 items</span>
-              </div>
-              <ul class="gift-list" data-recipient-list="kids"></ul>
-            </section>
+          <div class="wishlist__columns" id="wishlist-container">
+            <!-- Dynamic recipient lists will be rendered here -->
           </div>
 
           <aside class="gift-form-card" aria-labelledby="gift-form-title">
@@ -215,34 +144,36 @@
               <div class="field-grid">
                 <div class="field-group">
                   <label for="gift-recipient">Recipient</label>
-                  <select id="gift-recipient" name="recipient" required>
-                    <option value="wife">My wife</option>
-                    <option value="kids">One of the kids</option>
-                  </select>
+                  <input id="gift-recipient" name="recipient" type="text" required placeholder="Enter a name" />
                 </div>
                 <div class="field-group">
                   <label for="gift-category">Category</label>
-                  <select id="gift-category" name="category" required>
-                    <option value="experience">Experience</option>
-                    <option value="keepsake">Keepsake</option>
-                    <option value="learning">Learning</option>
-                    <option value="creative">Creative</option>
-                    <option value="wellness">Wellness</option>
-                  </select>
+                  <input id="gift-category" name="category" type="text" list="category-suggestions" placeholder="e.g., Experience" />
+                  <datalist id="category-suggestions">
+                    <option value="Experience"></option>
+                    <option value="Keepsake"></option>
+                    <option value="Learning"></option>
+                    <option value="Creative"></option>
+                    <option value="Wellness"></option>
+                  </datalist>
                 </div>
+              </div>
+              <div class="field-group">
+                <label for="gift-event">Event</label>
+                <input id="gift-event" name="event" type="text" placeholder="e.g., Christmas 2024" />
               </div>
               <div class="field-grid">
                 <div class="field-group">
-                  <label for="gift-price">Estimated price ($)</label>
-                  <input id="gift-price" name="price" type="number" min="0" step="1" placeholder="75" />
-                </div>
-                <div class="field-group">
-                  <label for="gift-priority">Priority</label>
-                  <select id="gift-priority" name="priority">
-                    <option value="High">High</option>
-                    <option value="Medium" selected>Medium</option>
-                    <option value="Low">Low</option>
+                  <label for="gift-type">Gift Type</label>
+                  <select id="gift-type" name="type">
+                    <option value="Individual">Individual Gift</option>
+                    <option value="Group">Group Gift</option>
+                    <option value="Cash">Cash Fund</option>
                   </select>
+                </div>
+                <div class="field-group" id="goal-amount-group" style="display: none;">
+                  <label for="gift-goal">Goal Amount ($)</label>
+                  <input id="gift-goal" name="goal" type="number" min="0" step="1" placeholder="200" />
                 </div>
               </div>
               <div class="field-group">

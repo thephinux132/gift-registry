@@ -24,15 +24,7 @@ onAuthStateChanged(auth, user => {
 function init() {
   const giftsCollection = collection(db, "gifts");
 
-  const lists = {
-    wife: document.querySelector('[data-recipient-list="wife"]'),
-    kids: document.querySelector('[data-recipient-list="kids"]')
-  };
-
-  const countLabels = {
-    wife: document.querySelector("[data-count-wife]"),
-    kids: document.querySelector("[data-count-kids]")
-  };
+  const wishlistContainer = document.getElementById("wishlist-container");
 
   const statEls = {
     total: document.querySelector("[data-stat-total]"),
@@ -43,6 +35,17 @@ function init() {
 
   const form = document.getElementById("gift-form");
   const logoutBtn = document.getElementById("logout-btn");
+  const giftTypeSelector = document.getElementById("gift-type");
+  const goalAmountGroup = document.getElementById("goal-amount-group");
+
+  giftTypeSelector.addEventListener("change", () => {
+    const selectedType = giftTypeSelector.value;
+    if (selectedType === "Group" || selectedType === "Cash") {
+      goalAmountGroup.style.display = "block";
+    } else {
+      goalAmountGroup.style.display = "none";
+    }
+  });
 
   let gifts = [];
 
@@ -69,19 +72,47 @@ function init() {
   }
 
   function renderLists() {
-    const grouped = { wife: [], kids: [] };
+    wishlistContainer.innerHTML = "";
+    const grouped = {};
     for (const gift of gifts) {
-      grouped[gift.recipient].push(gift);
+      const recipient = gift.recipient || "Uncategorized";
+      if (!grouped[recipient]) {
+        grouped[recipient] = [];
+      }
+      grouped[recipient].push(gift);
     }
 
-    grouped.wife.sort(sortByPurchasedThenPriority);
-    grouped.kids.sort(sortByPurchasedThenPriority);
+    const sortedRecipients = Object.keys(grouped).sort();
 
-    updateList(lists.wife, grouped.wife);
-    updateList(lists.kids, grouped.kids);
+    for (const recipient of sortedRecipients) {
+      const items = grouped[recipient];
+      items.sort(sortByPurchasedThenPriority);
 
-    countLabels.wife.textContent = summaryText(grouped.wife.length);
-    countLabels.kids.textContent = summaryText(grouped.kids.length);
+      const listSection = document.createElement("section");
+      listSection.className = "wishlist__column";
+      listSection.setAttribute("aria-labelledby", `list-title-${recipient}`);
+
+      const header = document.createElement("div");
+      header.className = "column__header";
+
+      const title = document.createElement("h3");
+      title.id = `list-title-${recipient}`;
+      title.textContent = recipient;
+
+      const count = document.createElement("span");
+      count.className = "column__count";
+      count.textContent = summaryText(items.length);
+
+      header.append(title, count);
+
+      const listElement = document.createElement("ul");
+      listElement.className = "gift-list";
+
+      listSection.append(header, listElement);
+      wishlistContainer.append(listSection);
+
+      updateList(listElement, items);
+    }
   }
 
   const priorityWeight = { High: 0, Medium: 1, Low: 2 };
@@ -103,6 +134,26 @@ function init() {
       return "No items yet";
     }
     return `${count} ${count === 1 ? "item" : "items"}`;
+  }
+
+  function createProgressBar(goal, contributions) {
+    const totalContributions = contributions.reduce((sum, c) => sum + c.amount, 0);
+    const percentage = goal > 0 ? (totalContributions / goal) * 100 : 0;
+
+    const progressContainer = document.createElement("div");
+    progressContainer.className = "progress-bar";
+
+    const progressIndicator = document.createElement("div");
+    progressIndicator.className = "progress-bar__indicator";
+    progressIndicator.style.width = `${percentage}%`;
+
+    progressContainer.append(progressIndicator);
+
+    const progressText = document.createElement("span");
+    progressText.className = "progress-bar__text";
+    progressText.textContent = `${formatCurrency(totalContributions)} / ${formatCurrency(goal)}`;
+
+    return [progressContainer, progressText];
   }
 
   function updateList(listElement, items) {
@@ -142,7 +193,16 @@ function init() {
       category.innerHTML = `<span aria-hidden="true">🏷️</span>${gift.category}`;
       meta.append(category);
 
-      if (typeof gift.price === "number" && !Number.isNaN(gift.price)) {
+      if (gift.event) {
+        const event = document.createElement("span");
+        event.innerHTML = `<span aria-hidden="true">🎉</span>${gift.event}`;
+        meta.append(event);
+      }
+
+      if (gift.type === "Group" || gift.type === "Cash") {
+        const [progressBar, progressText] = createProgressBar(gift.goal, gift.contributions || []);
+        meta.append(progressBar, progressText);
+      } else if (typeof gift.price === "number" && !Number.isNaN(gift.price)) {
         const price = document.createElement("span");
         price.innerHTML = `<span aria-hidden="true">💰</span>${formatCurrency(gift.price)}`;
         meta.append(price);
@@ -209,7 +269,12 @@ function init() {
   function updateStats() {
     const total = gifts.length;
     const purchased = gifts.filter((gift) => gift.purchased).length;
-    const budget = gifts.reduce((sum, gift) => (typeof gift.price === "number" ? sum + gift.price : sum), 0);
+    const budget = gifts.reduce((sum, gift) => {
+      if (gift.type === "Group" || gift.type === "Cash") {
+        return sum + (gift.goal || 0);
+      }
+      return sum + (gift.price || 0);
+    }, 0);
     statEls.total.textContent = total;
     statEls.purchased.textContent = purchased;
     statEls.remaining.textContent = Math.max(total - purchased, 0);
@@ -231,10 +296,14 @@ function init() {
 
     const newGift = {
       name,
-      recipient: formData.get("recipient"),
-      category: formData.get("category"),
+      recipient: formData.get("recipient").trim(),
+      category: formData.get("category").trim(),
+      event: formData.get("event").trim(),
       priority: formData.get("priority"),
+      type: formData.get("type"),
       price: normalizePrice(formData.get("price")),
+      goal: normalizePrice(formData.get("goal")),
+      contributions: [],
       link: (formData.get("link") || "").trim(),
       notes: (formData.get("notes") || "").trim(),
       purchased: false,
@@ -246,9 +315,43 @@ function init() {
     form.querySelector("[name='name']").focus();
   }
 
-  function setupFeaturedFilters() {
+  function setupInspirationSection() {
+    const grid = document.querySelector("[data-featured-grid]");
     const filterButtons = document.querySelectorAll(".filter-btn");
-    const cards = document.querySelectorAll("[data-featured-grid] .gift-card");
+    let cards = [];
+
+    async function loadInspiration() {
+      try {
+        const response = await fetch("inspiration.json");
+        const inspirationItems = await response.json();
+        renderInspiration(inspirationItems);
+      } catch (error) {
+        console.error("Error loading inspiration items:", error);
+        grid.innerHTML = "<p>Could not load inspiration items.</p>";
+      }
+    }
+
+    function renderInspiration(items) {
+      grid.innerHTML = "";
+      items.forEach(item => {
+        const card = document.createElement("article");
+        card.className = "gift-card";
+        card.dataset.groups = item.groups.join(" ");
+
+        card.innerHTML = `
+          <div class="gift-card__tag">${item.tag}</div>
+          <h3>${item.name}</h3>
+          <p>${item.description}</p>
+          <div class="gift-card__meta">
+            <span>${formatCurrency(item.price)}</span>
+            <a href="${item.link}" target="_blank" rel="noopener">View inspiration</a>
+          </div>
+        `;
+        grid.append(card);
+      });
+      cards = Array.from(grid.querySelectorAll(".gift-card"));
+      applyFilter("all");
+    }
 
     function applyFilter(group) {
       cards.forEach((card) => {
@@ -266,8 +369,7 @@ function init() {
       });
     });
 
-    const activeButton = document.querySelector(".filter-btn.is-active");
-    applyFilter(activeButton?.dataset.filter || "all");
+    loadInspiration();
   }
 
   function setupCountdown() {
@@ -319,12 +421,26 @@ function init() {
     });
   }
 
+  function handleBookmarklet() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("action") === "add") {
+      form.name.value = urlParams.get("name") || "";
+      form.price.value = urlParams.get("price") || "";
+      form.link.value = urlParams.get("link") || "";
+      form.name.focus();
+
+      // Clean up the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+
   form.addEventListener("submit", handleSubmit);
   logoutBtn.addEventListener("click", () => {
     signOut(auth);
   });
 
-  setupFeaturedFilters();
+  setupInspirationSection();
   setupCountdown();
   setupRealtimeListener();
+  handleBookmarklet();
 }
