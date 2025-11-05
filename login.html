@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Family Gift Registry</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container" style="max-width: 400px; margin-top: 5rem;">
+    <div class="login-card">
+      <h2>Family Gift Registry Login</h2>
+      <p>Please sign in or create an account to continue.</p>
+      <form id="login-form">
+        <div class="field-group">
+          <label for="email">Email</label>
+          <input id="email" type="email" name="email" required />
+        </div>
+        <div class="field-group">
+          <label for="password">Password</label>
+          <input id="password" type="password" name="password" required />
+        </div>
+        <div class="form-actions">
+          <button type="submit" id="login-btn" class="btn btn--primary">Login</button>
+          <button type="button" id="signup-btn" class="btn">Sign Up</button>
+        </div>
+        <p id="error-message" style="color: red; margin-top: 1rem; display: none;"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="login.js" type="module"></script>
+</body>
+</html>
