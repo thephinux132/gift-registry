@@ -13,12 +13,10 @@ import {
   signOut
 } from './firebase-init.js';
 
-let giftsCollection;
+const giftsCollection = collection(db, "gifts");
 
 onAuthStateChanged(auth, user => {
   if (user) {
-    giftsCollection = collection(db, "users", user.uid, "gifts");
-    console.log("giftsCollection path:", giftsCollection.path);
     init();
   } else {
     window.location.href = "login.html";
@@ -230,20 +228,25 @@ function init() {
         toggleBtn.classList.add("is-complete");
       }
       toggleBtn.addEventListener("click", () => {
-        const giftRef = doc(giftsCollection, gift.id);
-        updateDoc(giftRef, { purchased: !gift.purchased });
-      });
+                    const giftRef = doc(db, "gifts", gift.id);
+                    updateDoc(giftRef, { purchased: !gift.purchased });      });
       
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "btn btn--ghost";
       deleteBtn.textContent = "Delete";
-      deleteBtn.addEventListener("click", () => {
-        if (confirm("Are you sure you want to delete this gift?")) {
-          const giftRef = doc(giftsCollection, gift.id);
-          deleteDoc(giftRef);
-        }
-      });
+
+      const user = auth.currentUser;
+      if (user && user.uid === gift.addedBy) {
+        deleteBtn.addEventListener("click", () => {
+          if (confirm("Are you sure you want to delete this gift?")) {
+            const giftRef = doc(db, "gifts", gift.id);
+            deleteDoc(giftRef);
+          }
+        });
+      } else {
+        deleteBtn.style.display = "none";
+      }
 
       actions.append(toggleBtn, deleteBtn);
 
@@ -291,12 +294,16 @@ function init() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    console.log("handleSubmit called");
-    console.log("giftsCollection path:", giftsCollection.path);
     const formData = new FormData(form);
     const name = formData.get("name").trim();
     if (!name) {
       return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("No user logged in");
+        return;
     }
 
     const newGift = {
@@ -312,7 +319,8 @@ function init() {
       link: (formData.get("link") || "").trim(),
       notes: (formData.get("notes") || "").trim(),
       purchased: false,
-      added: new Date().toISOString()
+      added: new Date().toISOString(),
+      addedBy: user.uid
     };
 
     await addDoc(giftsCollection, newGift);
