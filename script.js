@@ -120,7 +120,12 @@ function init() {
       count.className = "column__count";
       count.textContent = summaryText(items.length);
 
-      header.append(title, count);
+      const aiButton = document.createElement("button");
+      aiButton.className = "btn btn--ghost";
+      aiButton.textContent = "Get AI Suggestions";
+      aiButton.addEventListener("click", () => getAISuggestions(key, items));
+
+      header.append(title, count, aiButton);
 
       const listElement = document.createElement("ul");
       listElement.className = "gift-list";
@@ -178,6 +183,69 @@ function init() {
   const closeModalBtn = editModal.querySelector(".close-button");
   const editGiftTypeSelector = document.getElementById("edit-gift-type");
   const editGoalAmountGroup = document.getElementById("edit-goal-amount-group");
+
+  const aiSuggestionsModal = document.getElementById("ai-suggestions-modal");
+  const aiSuggestionsList = document.getElementById("ai-suggestions-list");
+  const closeAISuggestionsModalBtn = aiSuggestionsModal.querySelector(".close-button");
+
+  function getAISuggestions(recipient, existingGifts) {
+    // In a real application, this would call an AI model.
+    // Here, we'll simulate it with a predefined list.
+    const suggestions = [
+      { name: "A good book", category: "Learning" },
+      { name: "A subscription box", category: "Experience" },
+      { name: "A weekend getaway", category: "Experience" },
+      { name: "A cooking class", category: "Learning" },
+      { name: "A personalized photo album", category: "Keepsake" },
+    ];
+
+    aiSuggestionsList.innerHTML = ""; // Clear previous suggestions
+
+    for (const suggestion of suggestions) {
+      const suggestionEl = document.createElement("div");
+      suggestionEl.className = "suggestion-item";
+      suggestionEl.innerHTML = `
+        <p><strong>${suggestion.name}</strong></p>
+        <p>Category: ${suggestion.category}</p>
+        <button class="btn btn--primary add-suggestion-btn">Add to Wishlist</button>
+      `;
+      suggestionEl.querySelector(".add-suggestion-btn").addEventListener("click", () => {
+        const newGift = {
+          name: suggestion.name,
+          recipient: recipient,
+          category: suggestion.category,
+          event: "",
+          date: "",
+          priority: "Medium",
+          type: "Individual",
+          price: null,
+          goal: null,
+          contributions: [],
+          link: "",
+          notes: "AI Suggested",
+          purchased: false,
+          added: new Date().toISOString(),
+          addedBy: auth.currentUser.uid
+        };
+        addDoc(giftsCollection, newGift);
+        closeAISuggestionsModal();
+      });
+      aiSuggestionsList.appendChild(suggestionEl);
+    }
+
+    aiSuggestionsModal.style.display = "block";
+  }
+
+  function closeAISuggestionsModal() {
+    aiSuggestionsModal.style.display = "none";
+  }
+
+  closeAISuggestionsModalBtn.addEventListener("click", closeAISuggestionsModal);
+  window.addEventListener("click", (event) => {
+    if (event.target == aiSuggestionsModal) {
+      closeAISuggestionsModal();
+    }
+  });
 
   editGiftTypeSelector.addEventListener("change", () => {
     const selectedType = editGiftTypeSelector.value;

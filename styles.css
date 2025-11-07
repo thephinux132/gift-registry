@@ -788,3 +788,18 @@ textarea {
   align-items: center;
   gap: 1rem;
 }
+#ai-suggestions-list {
+  margin-top: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.suggestion-item {
+  border: 1px solid #eee;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.suggestion-item button {
+  margin-top: 0.5rem;
+}
