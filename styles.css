@@ -783,3 +783,8 @@ textarea {
 .calendar-day--empty {
     background-color: #f9f9f9;
 }
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}

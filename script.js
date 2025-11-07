@@ -396,74 +396,89 @@ function init() {
     statEls.budget.textContent = formatCurrency(budget);
   }
 
-  function setupCalendar() {
+  let currentDate = new Date();
+
+  function renderCalendar(year, month) {
     const calendarContainer = document.getElementById("calendar-container");
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    const currentMonthYearEl = document.getElementById("current-month-year");
 
-    function renderCalendar(year, month) {
-      calendarContainer.innerHTML = ""; // Clear previous calendar
+    calendarContainer.innerHTML = ""; // Clear previous calendar
 
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const daysInMonth = lastDay.getDate();
-      const startingDay = firstDay.getDay();
+    currentMonthYearEl.textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
 
-      // Add day names
-      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      for (const dayName of dayNames) {
-          const dayNameEl = document.createElement("div");
-          dayNameEl.className = "calendar-day-name";
-          dayNameEl.textContent = dayName;
-          calendarContainer.appendChild(dayNameEl);
-      }
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
 
-      // Add empty cells for days before the first day of the month
-      for (let i = 0; i < startingDay; i++) {
-        const emptyCell = document.createElement("div");
-        emptyCell.className = "calendar-day calendar-day--empty";
-        calendarContainer.appendChild(emptyCell);
-      }
-
-      // Add day cells
-      for (let i = 1; i <= daysInMonth; i++) {
-        const dayCell = document.createElement("div");
-        dayCell.className = "calendar-day";
-        dayCell.innerHTML = `<h4>${i}</h4>`;
-        calendarContainer.appendChild(dayCell);
-      }
-
-      populateCalendarWithEvents();
+    // Add day names
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    for (const dayName of dayNames) {
+        const dayNameEl = document.createElement("div");
+        dayNameEl.className = "calendar-day-name";
+        dayNameEl.textContent = dayName;
+        calendarContainer.appendChild(dayNameEl);
     }
 
-    function populateCalendarWithEvents() {
-      const dayCells = calendarContainer.querySelectorAll('.calendar-day:not(.calendar-day--empty)');
-      const giftsWithDates = gifts.filter(gift => gift.date);
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startingDay; i++) {
+      const emptyCell = document.createElement("div");
+      emptyCell.className = "calendar-day calendar-day--empty";
+      calendarContainer.appendChild(emptyCell);
+    }
 
-      for (const gift of giftsWithDates) {
-        const eventDate = new Date(gift.date);
-        if (eventDate.getFullYear() === year && eventDate.getMonth() === month) {
-          const dayOfMonth = eventDate.getDate();
-          const dayCell = dayCells[dayOfMonth - 1];
-          if (dayCell) {
-            const eventEl = document.createElement("div");
-            eventEl.className = "calendar-event";
-            eventEl.textContent = gift.name;
-            dayCell.appendChild(eventEl);
-          }
+    // Add day cells
+    for (let i = 1; i <= daysInMonth; i++) {
+      const dayCell = document.createElement("div");
+      dayCell.className = "calendar-day";
+      dayCell.innerHTML = `<h4>${i}</h4>`;
+      calendarContainer.appendChild(dayCell);
+    }
+
+    populateCalendarWithEvents(year, month);
+  }
+
+  function populateCalendarWithEvents(year, month) {
+    const calendarContainer = document.getElementById("calendar-container");
+    const dayCells = calendarContainer.querySelectorAll('.calendar-day:not(.calendar-day--empty)');
+    const giftsWithDates = gifts.filter(gift => gift.date);
+
+    for (const gift of giftsWithDates) {
+      const eventDate = new Date(gift.date);
+      if (eventDate.getFullYear() === year && eventDate.getMonth() === month) {
+        const dayOfMonth = eventDate.getDate();
+        const dayCell = dayCells[dayOfMonth - 1];
+        if (dayCell) {
+          const eventEl = document.createElement("div");
+          eventEl.className = "calendar-event";
+          eventEl.textContent = gift.name;
+          dayCell.appendChild(eventEl);
         }
       }
     }
-
-    renderCalendar(year, month);
   }
+
+  const prevMonthBtn = document.getElementById("prev-month-btn");
+  const nextMonthBtn = document.getElementById("next-month-btn");
+
+  function showPrevMonth() {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+  }
+
+  function showNextMonth() {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+  }
+
+  prevMonthBtn.addEventListener("click", showPrevMonth);
+  nextMonthBtn.addEventListener("click", showNextMonth);
 
   function render() {
     const groupBy = groupBySelector.value;
     renderLists(groupBy);
     updateStats();
-    setupCalendar();
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
   }
 
   async function handleSubmit(event) {
