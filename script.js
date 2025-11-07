@@ -231,6 +231,8 @@ function init() {
             localStorage.removeItem("gemini_api_key"); // Clear the invalid key
             alert("Invalid API key. Please try again.");
         }
+        const errorText = await response.text();
+        console.error("API Error Response:", errorText);
         throw new Error(`API request failed with status ${response.status}`);
       }
 
