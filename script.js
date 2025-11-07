@@ -189,51 +189,93 @@ function init() {
   const closeAISuggestionsModalBtn = aiSuggestionsModal.querySelector(".close-button");
 
   function getAISuggestions(recipient, existingGifts) {
-    // In a real application, this would call an AI model.
-    // Here, we'll simulate it with a predefined list.
-    const suggestions = [
-      { name: "A good book", category: "Learning" },
-      { name: "A subscription box", category: "Experience" },
-      { name: "A weekend getaway", category: "Experience" },
-      { name: "A cooking class", category: "Learning" },
-      { name: "A personalized photo album", category: "Keepsake" },
-    ];
+    let apiKey = localStorage.getItem("gemini_api_key");
 
-    aiSuggestionsList.innerHTML = ""; // Clear previous suggestions
-
-    for (const suggestion of suggestions) {
-      const suggestionEl = document.createElement("div");
-      suggestionEl.className = "suggestion-item";
-      suggestionEl.innerHTML = `
-        <p><strong>${suggestion.name}</strong></p>
-        <p>Category: ${suggestion.category}</p>
-        <button class="btn btn--primary add-suggestion-btn">Add to Wishlist</button>
-      `;
-      suggestionEl.querySelector(".add-suggestion-btn").addEventListener("click", () => {
-        const newGift = {
-          name: suggestion.name,
-          recipient: recipient,
-          category: suggestion.category,
-          event: "",
-          date: "",
-          priority: "Medium",
-          type: "Individual",
-          price: null,
-          goal: null,
-          contributions: [],
-          link: "",
-          notes: "AI Suggested",
-          purchased: false,
-          added: new Date().toISOString(),
-          addedBy: auth.currentUser.uid
-        };
-        addDoc(giftsCollection, newGift);
-        closeAISuggestionsModal();
-      });
-      aiSuggestionsList.appendChild(suggestionEl);
+    if (!apiKey) {
+      apiKey = prompt("Please enter your Google AI Studio API key:");
+      if (apiKey) {
+        localStorage.setItem("gemini_api_key", apiKey);
+      } else {
+        // User cancelled the prompt
+        return;
+      }
     }
 
+    const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+
+    const interests = existingGifts.map(gift => gift.name).join(', ');
+    const promptText = `Given that a person is interested in ${interests}, suggest 5 gift ideas for them. Return the suggestions as a JSON array of objects, where each object has a "name" and "category" property.`
+
+    aiSuggestionsList.innerHTML = "<p>Getting suggestions...</p>";
     aiSuggestionsModal.style.display = "block";
+
+    fetch(apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: promptText
+          }]
+        }]
+      })
+    })
+    .then(response => {
+      if (!response.ok) {
+        if (response.status === 400) {
+            // Bad request, maybe the API key is invalid
+            localStorage.removeItem("gemini_api_key"); // Clear the invalid key
+            alert("Invalid API key. Please try again.");
+        }
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      const suggestionsText = data.candidates[0].content.parts[0].text;
+      const suggestionsJson = suggestionsText.replace(/```json\n/g, "").replace(/\n```/g, "");
+      const suggestions = JSON.parse(suggestionsJson);
+
+      aiSuggestionsList.innerHTML = ""; // Clear "Getting suggestions..." message
+
+      for (const suggestion of suggestions) {
+        const suggestionEl = document.createElement("div");
+        suggestionEl.className = "suggestion-item";
+        suggestionEl.innerHTML = `
+          <p><strong>${suggestion.name}</strong></p>
+          <p>Category: ${suggestion.category}</p>
+          <button class="btn btn--primary add-suggestion-btn">Add to Wishlist</button>
+        `;
+        suggestionEl.querySelector(".add-suggestion-btn").addEventListener("click", () => {
+          const newGift = {
+            name: suggestion.name,
+            recipient: recipient,
+            category: suggestion.category,
+            event: "",
+            date: "",
+            priority: "Medium",
+            type: "Individual",
+            price: null,
+            goal: null,
+            contributions: [],
+            link: "",
+            notes: "AI Suggested",
+            purchased: false,
+            added: new Date().toISOString(),
+            addedBy: auth.currentUser.uid
+          };
+          addDoc(giftsCollection, newGift);
+          closeAISuggestionsModal();
+        });
+        aiSuggestionsList.appendChild(suggestionEl);
+      }
+    })
+    .catch(error => {
+      console.error("Error fetching AI suggestions:", error);
+      aiSuggestionsList.innerHTML = "<p>Could not load AI suggestions at this time.</p>";
+    });
   }
 
   function closeAISuggestionsModal() {
