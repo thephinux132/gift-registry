@@ -17,8 +17,10 @@ const giftsCollection = collection(db, "gifts");
 
 onAuthStateChanged(auth, user => {
   if (user) {
+    console.log("User is logged in:", user.uid);
     init();
   } else {
+    console.log("User is logged out");
     window.location.href = "login.html";
   }
 });
@@ -644,6 +646,7 @@ function init() {
 
   form.addEventListener("submit", handleSubmit);
   logoutBtn.addEventListener("click", () => {
+    console.log("Logout button clicked");
     signOut(auth);
   });
 
