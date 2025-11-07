@@ -189,22 +189,22 @@ function init() {
   const closeAISuggestionsModalBtn = aiSuggestionsModal.querySelector(".close-button");
 
   async function getAISuggestions(recipient, existingGifts) {
-    let apiKey = localStorage.getItem("openai_api_key");
+    let apiKey = localStorage.getItem("gemini_api_key");
 
     if (!apiKey) {
-      apiKey = prompt("Please enter your OpenAI API key:");
+      apiKey = prompt("Please enter your Google AI Studio API key:");
       if (apiKey) {
-        localStorage.setItem("openai_api_key", apiKey);
+        localStorage.setItem("gemini_api_key", apiKey);
       } else {
         // User cancelled the prompt
         return;
       }
     }
 
-    const apiEndpoint = 'https://api.openai.com/v1/chat/completions';
+    const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
 
     const interests = existingGifts.map(gift => gift.name).join(', ');
-    const promptText = `Given that a person is interested in ${interests}, suggest 5 gift ideas for them. Return the suggestions as a JSON object with a single key "suggestions" which is an array of objects, where each object has a "name" and "category" property.`
+    const promptText = `Given that a person is interested in ${interests}, suggest 5 gift ideas for them. Return the suggestions as a JSON array of objects, where each object has a "name" and "category" property.`
 
     aiSuggestionsList.innerHTML = "<p>Getting suggestions...</p>";
     aiSuggestionsModal.style.display = "block";
@@ -214,22 +214,20 @@ function init() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [{
-            role: "user",
-            content: promptText
-          }],
-          response_format: { type: "json_object" }
+          contents: [{
+            parts: [{
+              text: promptText
+            }]
+          }]
         })
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-            // Unauthorized, maybe the API key is invalid
-            localStorage.removeItem("openai_api_key"); // Clear the invalid key
+        if (response.status === 400) {
+            // Bad request, maybe the API key is invalid
+            localStorage.removeItem("gemini_api_key"); // Clear the invalid key
             alert("Invalid API key. Please try again.");
         }
         const errorText = await response.text();
@@ -238,11 +236,13 @@ function init() {
       }
 
       const data = await response.json();
-      const suggestions = JSON.parse(data.choices[0].message.content);
+      const suggestionsText = data.candidates[0].content.parts[0].text;
+      const suggestionsJson = suggestionsText.replace(/```json\n/g, "").replace(/\n```/g, "");
+      const suggestions = JSON.parse(suggestionsJson);
 
       aiSuggestionsList.innerHTML = ""; // Clear "Getting suggestions..." message
 
-      for (const suggestion of suggestions.suggestions) { // The suggestions are in a "suggestions" property
+      for (const suggestion of suggestions) {
         const suggestionEl = document.createElement("div");
         suggestionEl.className = "suggestion-item";
         suggestionEl.innerHTML = `
