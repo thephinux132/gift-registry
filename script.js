@@ -201,7 +201,7 @@ function init() {
       }
     }
 
-    const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent`;
+    const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
 
     const interests = existingGifts.map(gift => gift.name).join(', ');
     const promptText = `Given that a person is interested in ${interests}, suggest 5 gift ideas for them. Return the suggestions as a JSON array of objects, where each object has a "name" and "category" property.`
@@ -214,7 +214,6 @@ function init() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
         },
         body: JSON.stringify({
           contents: [{
