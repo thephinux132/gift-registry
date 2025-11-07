@@ -322,7 +322,7 @@ function init() {
       toggleBtn.type = "button";
       toggleBtn.className = "toggle-purchased";
       toggleBtn.textContent = gift.purchased ? "Purchased" : "Mark purchased";
-      if (.gift.purchased) {
+      if (gift.purchased) {
         toggleBtn.classList.add("is-complete");
       }
       toggleBtn.addEventListener("click", () => {
