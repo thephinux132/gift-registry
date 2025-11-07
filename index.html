@@ -106,6 +106,13 @@
             <p class="section__eyebrow">Personalized list</p>
             <h2>Track everything from wishlists to wrapped surprises</h2>
           </div>
+          <div class="grouping-controls">
+            <label for="group-by">Group by:</label>
+            <select id="group-by">
+              <option value="recipient">Recipient</option>
+              <option value="event">Event</option>
+            </select>
+          </div>
           <p class="section__lead">Add new ideas, mark gifts as purchased, and keep an eye on the budget &mdash; all saved to this browser so I can pick up right where I left off.</p>
         </header>
 
@@ -161,6 +168,10 @@
               <div class="field-group">
                 <label for="gift-event">Event</label>
                 <input id="gift-event" name="event" type="text" placeholder="e.g., Christmas 2024" />
+              </div>
+              <div class="field-group">
+                <label for="gift-date">Event Date</label>
+                <input id="gift-date" name="date" type="date" />
               </div>
               <div class="field-grid">
                 <div class="field-group">
@@ -246,6 +257,18 @@
         </aside>
       </div>
     </section>
+
+    <section class="section section--light" id="calendar">
+      <div class="container">
+        <header class="section__header">
+          <div>
+            <p class="section__eyebrow">Calendar View</p>
+            <h2>Upcoming Events</h2>
+          </div>
+        </header>
+        <div id="calendar-container"></div>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -254,6 +277,63 @@
       <p class="site-footer__note">This registry is now connected to the cloud, accessible from anywhere.</p>
     </div>
   </footer>
+
+  <div id="edit-gift-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h2>Edit Gift Idea</h2>
+      <form id="edit-gift-form" autocomplete="off">
+        <input type="hidden" id="edit-gift-id" name="id">
+        <div class="field-group">
+          <label for="edit-gift-name">Gift name</label>
+          <input id="edit-gift-name" name="name" type="text" required placeholder="Ex: StoryWorth subscription" />
+        </div>
+        <div class="field-grid">
+          <div class="field-group">
+            <label for="edit-gift-recipient">Recipient</label>
+            <input id="edit-gift-recipient" name="recipient" type="text" required placeholder="Enter a name" />
+          </div>
+          <div class="field-group">
+            <label for="edit-gift-category">Category</label>
+            <input id="edit-gift-category" name="category" type="text" list="category-suggestions" placeholder="e.g., Experience" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="edit-gift-event">Event</label>
+          <input id="edit-gift-event" name="event" type="text" placeholder="e.g., Christmas 2024" />
+        </div>
+        <div class="field-group">
+            <label for="edit-gift-date">Event Date</label>
+            <input id="edit-gift-date" name="date" type="date" />
+        </div>
+        <div class="field-grid">
+            <div class="field-group">
+                <label for="edit-gift-type">Gift Type</label>
+                <select id="edit-gift-type" name="type">
+                <option value="Individual">Individual Gift</option>
+                <option value="Group">Group Gift</option>
+                <option value="Cash">Cash Fund</option>
+                </select>
+            </div>
+            <div class="field-group" id="edit-goal-amount-group" style="display: none;">
+                <label for="edit-gift-goal">Goal Amount ($)</label>
+                <input id="edit-gift-goal" name="goal" type="number" min="0" step="1" placeholder="200" />
+            </div>
+        </div>
+        <div class="field-group">
+          <label for="edit-gift-link">Link or store note</label>
+          <input id="edit-gift-link" name="link" type="url" placeholder="https://" />
+        </div>
+        <div class="field-group">
+          <label for="edit-gift-notes">Personal notes</label>
+          <textarea id="edit-gift-notes" name="notes" rows="3" placeholder="Add a reminder, size, or the reason they'll love it"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="script.js" type="module"></script>
 </body>

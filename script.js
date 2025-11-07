@@ -78,35 +78,41 @@ function init() {
     }
   }
 
-  function renderLists() {
+  const groupBySelector = document.getElementById("group-by");
+
+  groupBySelector.addEventListener("change", () => {
+    render();
+  });
+
+  function renderLists(groupBy = "recipient") {
     while (wishlistContainer.firstChild) {
       wishlistContainer.removeChild(wishlistContainer.firstChild);
     }
     const grouped = {};
     for (const gift of gifts) {
-      const recipient = gift.recipient || "Uncategorized";
-      if (!grouped[recipient]) {
-        grouped[recipient] = [];
+      const key = gift[groupBy] || "Uncategorized";
+      if (!grouped[key]) {
+        grouped[key] = [];
       }
-      grouped[recipient].push(gift);
+      grouped[key].push(gift);
     }
 
-    const sortedRecipients = Object.keys(grouped).sort();
+    const sortedKeys = Object.keys(grouped).sort();
 
-    for (const recipient of sortedRecipients) {
-      const items = grouped[recipient];
+    for (const key of sortedKeys) {
+      const items = grouped[key];
       items.sort(sortByPurchasedThenPriority);
 
       const listSection = document.createElement("section");
       listSection.className = "wishlist__column";
-      listSection.setAttribute("aria-labelledby", `list-title-${recipient}`);
+      listSection.setAttribute("aria-labelledby", `list-title-${key}`);
 
       const header = document.createElement("div");
       header.className = "column__header";
 
       const title = document.createElement("h3");
-      title.id = `list-title-${recipient}`;
-      title.textContent = recipient;
+      title.id = `list-title-${key}`;
+      title.textContent = key;
 
       const count = document.createElement("span");
       count.className = "column__count";
@@ -164,6 +170,76 @@ function init() {
 
     return [progressContainer, progressText];
   }
+
+  const editModal = document.getElementById("edit-gift-modal");
+  const editForm = document.getElementById("edit-gift-form");
+  const closeModalBtn = editModal.querySelector(".close-button");
+  const editGiftTypeSelector = document.getElementById("edit-gift-type");
+  const editGoalAmountGroup = document.getElementById("edit-goal-amount-group");
+
+  editGiftTypeSelector.addEventListener("change", () => {
+    const selectedType = editGiftTypeSelector.value;
+    if (selectedType === "Group" || selectedType === "Cash") {
+      editGoalAmountGroup.style.display = "block";
+    } else {
+      editGoalAmountGroup.style.display = "none";
+    }
+  });
+
+  function openEditModal(gift) {
+    editForm.id.value = gift.id;
+    editForm.name.value = gift.name;
+    editForm.recipient.value = gift.recipient;
+    editForm.category.value = gift.category;
+    editForm.event.value = gift.event;
+    editForm.date.value = gift.date;
+    editForm.type.value = gift.type;
+    editForm.goal.value = gift.goal;
+    editForm.link.value = gift.link;
+    editForm.notes.value = gift.notes;
+
+    if (gift.type === "Group" || gift.type === "Cash") {
+      editGoalAmountGroup.style.display = "block";
+    } else {
+      editGoalAmountGroup.style.display = "none";
+    }
+    
+    editModal.style.display = "block";
+  }
+
+  function closeEditModal() {
+    editModal.style.display = "none";
+  }
+
+  closeModalBtn.addEventListener("click", closeEditModal);
+  window.addEventListener("click", (event) => {
+    if (event.target == editModal) {
+      closeEditModal();
+    }
+  });
+
+  editForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = new FormData(editForm);
+    const giftId = formData.get("id");
+    
+    const updatedGift = {
+      name: formData.get("name").trim(),
+      recipient: formData.get("recipient").trim(),
+      category: formData.get("category").trim(),
+      event: formData.get("event").trim(),
+      date: formData.get("date"),
+      type: formData.get("type"),
+      goal: normalizePrice(formData.get("goal")),
+      link: (formData.get("link") || "").trim(),
+      notes: (formData.get("notes") || "").trim(),
+    };
+
+    const giftRef = doc(db, "gifts", giftId);
+    await updateDoc(giftRef, updatedGift);
+    
+    closeEditModal();
+  });
 
   function updateList(listElement, items) {
     while (listElement.firstChild) {
@@ -246,7 +322,7 @@ function init() {
       toggleBtn.type = "button";
       toggleBtn.className = "toggle-purchased";
       toggleBtn.textContent = gift.purchased ? "Purchased" : "Mark purchased";
-      if (gift.purchased) {
+      if (.gift.purchased) {
         toggleBtn.classList.add("is-complete");
       }
       toggleBtn.addEventListener("click", () => {
@@ -258,6 +334,11 @@ function init() {
       deleteBtn.className = "btn btn--ghost";
       deleteBtn.textContent = "Delete";
 
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "btn btn--ghost";
+      editBtn.textContent = "Edit";
+
       const user = auth.currentUser;
       if (user && user.uid === gift.addedBy) {
         deleteBtn.addEventListener("click", () => {
@@ -266,11 +347,15 @@ function init() {
             deleteDoc(giftRef);
           }
         });
+        editBtn.addEventListener("click", () => {
+          openEditModal(gift);
+        });
       } else {
         deleteBtn.style.display = "none";
+        editBtn.style.display = "none";
       }
 
-      actions.append(toggleBtn, deleteBtn);
+      actions.append(toggleBtn, editBtn, deleteBtn);
 
       if (gift.link) {
         const link = document.createElement("a");
@@ -309,9 +394,74 @@ function init() {
     statEls.budget.textContent = formatCurrency(budget);
   }
 
+  function setupCalendar() {
+    const calendarContainer = document.getElementById("calendar-container");
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    function renderCalendar(year, month) {
+      calendarContainer.innerHTML = ""; // Clear previous calendar
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+      const startingDay = firstDay.getDay();
+
+      // Add day names
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      for (const dayName of dayNames) {
+          const dayNameEl = document.createElement("div");
+          dayNameEl.className = "calendar-day-name";
+          dayNameEl.textContent = dayName;
+          calendarContainer.appendChild(dayNameEl);
+      }
+
+      // Add empty cells for days before the first day of the month
+      for (let i = 0; i < startingDay; i++) {
+        const emptyCell = document.createElement("div");
+        emptyCell.className = "calendar-day calendar-day--empty";
+        calendarContainer.appendChild(emptyCell);
+      }
+
+      // Add day cells
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dayCell = document.createElement("div");
+        dayCell.className = "calendar-day";
+        dayCell.innerHTML = `<h4>${i}</h4>`;
+        calendarContainer.appendChild(dayCell);
+      }
+
+      populateCalendarWithEvents();
+    }
+
+    function populateCalendarWithEvents() {
+      const dayCells = calendarContainer.querySelectorAll('.calendar-day:not(.calendar-day--empty)');
+      const giftsWithDates = gifts.filter(gift => gift.date);
+
+      for (const gift of giftsWithDates) {
+        const eventDate = new Date(gift.date);
+        if (eventDate.getFullYear() === year && eventDate.getMonth() === month) {
+          const dayOfMonth = eventDate.getDate();
+          const dayCell = dayCells[dayOfMonth - 1];
+          if (dayCell) {
+            const eventEl = document.createElement("div");
+            eventEl.className = "calendar-event";
+            eventEl.textContent = gift.name;
+            dayCell.appendChild(eventEl);
+          }
+        }
+      }
+    }
+
+    renderCalendar(year, month);
+  }
+
   function render() {
-    renderLists();
+    const groupBy = groupBySelector.value;
+    renderLists(groupBy);
     updateStats();
+    setupCalendar();
   }
 
   async function handleSubmit(event) {
@@ -333,6 +483,7 @@ function init() {
       recipient: formData.get("recipient").trim(),
       category: formData.get("category").trim(),
       event: formData.get("event").trim(),
+      date: formData.get("date"),
       priority: formData.get("priority"),
       type: formData.get("type"),
       price: normalizePrice(formData.get("price")),
