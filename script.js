@@ -188,7 +188,7 @@ function init() {
   const aiSuggestionsList = document.getElementById("ai-suggestions-list");
   const closeAISuggestionsModalBtn = aiSuggestionsModal.querySelector(".close-button");
 
-  function getAISuggestions(recipient, existingGifts) {
+  async function getAISuggestions(recipient, existingGifts) {
     let apiKey = localStorage.getItem("gemini_api_key");
 
     if (!apiKey) {
@@ -201,7 +201,7 @@ function init() {
       }
     }
 
-    const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+    const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`;
 
     const interests = existingGifts.map(gift => gift.name).join(', ');
     const promptText = `Given that a person is interested in ${interests}, suggest 5 gift ideas for them. Return the suggestions as a JSON array of objects, where each object has a "name" and "category" property.`
@@ -209,20 +209,22 @@ function init() {
     aiSuggestionsList.innerHTML = "<p>Getting suggestions...</p>";
     aiSuggestionsModal.style.display = "block";
 
-    fetch(apiEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: promptText
+    try {
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: promptText
+            }]
           }]
-        }]
-      })
-    })
-    .then(response => {
+        })
+      });
+
       if (!response.ok) {
         if (response.status === 400) {
             // Bad request, maybe the API key is invalid
@@ -231,9 +233,8 @@ function init() {
         }
         throw new Error(`API request failed with status ${response.status}`);
       }
-      return response.json();
-    })
-    .then(data => {
+
+      const data = await response.json();
       const suggestionsText = data.candidates[0].content.parts[0].text;
       const suggestionsJson = suggestionsText.replace(/```json\n/g, "").replace(/\n```/g, "");
       const suggestions = JSON.parse(suggestionsJson);
@@ -271,11 +272,11 @@ function init() {
         });
         aiSuggestionsList.appendChild(suggestionEl);
       }
-    })
-    .catch(error => {
+
+    } catch (error) {
       console.error("Error fetching AI suggestions:", error);
       aiSuggestionsList.innerHTML = "<p>Could not load AI suggestions at this time.</p>";
-    });
+    }
   }
 
   function closeAISuggestionsModal() {
