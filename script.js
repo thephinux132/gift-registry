@@ -518,9 +518,9 @@ function init() {
         while (grid.firstChild) {
         grid.removeChild(grid.firstChild);
       }
-        const error = document.createElement("p");
-        error.textContent = "Could not load inspiration items.";
-        grid.append(error);
+        const errorEl = document.createElement("p");
+        errorEl.textContent = "Could not load inspiration items.";
+        grid.append(errorEl);
       }
     }
 
